@@ -2,58 +2,73 @@ from flask import Flask, jsonify, request, redirect, url_for
 
 app = Flask(__name__)
 
-# Sample list of books (list of dictionaries)
-books = [
-    {'title': 'To Kill a Mockingbird', 'author': 'Harper Lee', 'isbn': '9780061120084'},
-    {'title': '1984', 'author': 'George Orwell', 'isbn': '9780451524935'},
-    {'title': 'The Great Gatsby', 'author': 'F. Scott Fitzgerald', 'isbn': '9780743273565'},
-    {'title': 'The Catcher in the Rye', 'author': 'J.D. Salinger', 'isbn': '9780316769488'},
-    {'title': 'Brave New World', 'author': 'Aldous Huxley', 'isbn': '9780060850524'},
-    {'title': 'To Kill a Mockingbird', 'author': 'Harper Lee', 'isbn': '9780061120084'},
-    {'title': 'The Lord of the Rings', 'author': 'J.R.R. Tolkien', 'isbn': '9780618645619'},
+# Sample list of games
+games = [
+     {'title': "The Witcher 3 - Wild Hunt", 
+     'developer': "CD Projekt Red",
+     'platform': "Multiple",
+     'genre': "Role-Playing",
+     'release date': "05/19/2015"
+     },     
+     {'title': "The Witcher 3 - Wild Hunt", 
+     'developer': "CD Projekt Red",
+     'platform': "Multiple",
+     'genre': "Role-Playing",
+     'release date': "05/19/2015"
+     },
 ]
 
+' This is the get route '
+@app.route('/api/games', methods=['GET'])
 
-@app.route('/api/books', methods=['GET'])
-def get_books():
-    # Get query parameters for authors
-    authors = request.args.getlist('author')
-    if authors:
-        # Filter books by authors if authors are specified
-        result = [book for book in books if book['author'] in authors]
+def get_games():
+    # Get query parameters for developers
+    developers = request.args.getlist('developer')
+    if developers:
+        # Filter games by developers if developers are specified
+        result = [game for game in games if game['developer'] in developers]
     else:
-        # Return all books if no authors are specified
-        result = books
+        # Return all games if no authors are specified
+        result = games
 
     return jsonify(result)
 
 
-@app.route('/api/books', methods=['POST'])
-def add_book():
+@app.route('/api/games', methods=['POST'])
+def add_game():
+
     data = request.json
     title = data.get('title')
-    author = data.get('author')
-    isbn = data.get('isbn')
-    if title and author and isbn:
-        new_book = {'title': title, 'author': author, 'isbn': isbn}
-        books.append(new_book)
-        return jsonify({'message': 'Book added successfully'}), 201
+    developer = data.get('developer')
+    platform = data.get('platform')
+    genre = data.get('genre')
+    release_date = data.get('release date')
+    
+    if title and developer and platform and genre and release_date:
+        new_game = {'title': title, 
+                    'developer': developer, 
+                    'platform': platform,
+                    'genre': genre,
+                    'release date': release_date
+        }
+        games.append(new_game)
+        return jsonify({'Message': 'Game added successfully!'}), 201
     else:
-        return jsonify({'error': 'Missing required fields'}), 400
+        return jsonify({'Error': 'Missing required fields'}), 400
 
 
-@app.route('/api/books/<isbn>', methods=['GET'])
-def get_book(isbn):
-    # Find the book with the specified ISBN
-    book = None
-    for b in books:
-        if b['isbn'] == isbn:
-            book = b
-            break
-    if book:
-        return jsonify(book)
-    else:
-        return jsonify({'error': 'Book not found'}), 404
+# @app.route('/api/games/<platform>', methods=['GET'])
+# def get_game(platform):
+#     # Find a list of games 
+#     book = None
+#     for b in books:
+#         if b['isbn'] == isbn:
+#             book = b
+#             break
+#     if book:
+#         return jsonify(book)
+#     else:
+#         return jsonify({'error': 'Book not found'}), 404
 
 
 if __name__ == '__main__':

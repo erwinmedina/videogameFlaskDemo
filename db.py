@@ -65,12 +65,15 @@ def add_game():
     genre = data.get('genre')
     release_date = data.get('release_date')
     
+    # Execute the insertion of a game. Return success #
     if title and developer and platform and genre and release_date:
         cur = mysql.connection.cursor()
         cur.execute("INSERT INTO games(title, developer, platform, genre, release_date) VALUES (%s, %s, %s, %s, %s)", (title, developer, platform, genre, release_date))
         mysql.connection.commit()
         cur.close()
         return jsonify({'Message': 'Video game added successfully'}), 201
+    
+    # Return failure if something was left blank #
     else:
         return jsonify({'Error': 'Missing required fields'}), 400
  
@@ -94,17 +97,61 @@ def get_game(game_id):
 # ********************************* #
 @app.route('/api/games/<int:game_id>', methods=["DELETE"])
 def delete_game(game_id):
-    cur = mysql.connection.cursor()
     try:
+        # Try to find game before trying to delete it #
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT id FROM games WHERE id=%s", (game_id,))
+        game = cur.fetchone()
+
+        # Returns error if game doesnt exist in database #
+        if game == None:
+            return jsonify({'Error': 'Game ID is invalid! Try harder.'}), 404
+    
+        # Executes the deletion of a game and returns success #
         cur.execute("DELETE FROM games WHERE id = %s", (game_id,))
         mysql.connection.commit()
         return jsonify({'Message': 'Video game deleted successfully'}), 204
+    
+    # Server error if request failed #
     except Exception as e:
         print(e)
-        if 'No data' in str(e):
-            return jsonify({'Error': 'Game ID is not valid!'}), 404
-        else:
-            return jsonify({"Error": "Internal server error"}), 500
+        return jsonify({"Error": "Internal server error"}), 500
+
+
+# ********************************* #
+# Updates a single game by ID value #
+# ********************************* #
+@app.route('/api/games/<int:game_id>', methods=["PUT"])
+def update_game(game_id):
+    try:
+        # Try to find game before trying to update #
+        cur = mysql.connection.cursor()
+        cur.execute("SELECT id FROM games WHERE id=%s", (game_id,))
+        game = cur.fetchone()
+
+        # Catches if game even exists in database #
+        if game == None:
+            return jsonify({'Error': 'Game ID is invalid! Try harder.'}), 404
+        
+        # Gets payload. #
+        data = request.json
+        title = data.get('title')
+        developer = data.get('developer')
+        platform = data.get('platform')
+        genre = data.get('genre')
+        release_date = data.get('release_date')
+
+        # Executes an update; replacing all info with payload #
+        cur.execute("UPDATE games SET title=%s, developer=%s, platform=%s, genre=%s, release_date=%s WHERE id=%s", (title, developer, platform, genre, release_date, game_id))
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({'Message': 'Video game updated successfully'}), 200
+    
+    # Returns failure if something went wrong #
+    except Exception as e:
+        print(e)
+        return jsonify({"Error": "Internal server error"}), 500
+
 
 
 if __name__ == '__main__':

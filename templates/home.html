@@ -7,7 +7,7 @@
     <h1>Video Game Management System</h1>
     <h2>Video Games</h2>
     <ul>
-        {% for game in videogames %}
+        {% for game in games %}
         <li>{{ game.title }} by {{ game.developer }} (Platform: {{ game.platform }}) (Genre: {{ game.genre}}) (Release Date: {{game.release_date}})</li>
         {% endfor %}
     </ul>

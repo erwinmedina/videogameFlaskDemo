@@ -1,54 +1,22 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, jsonify, render_template, request, redirect, url_for
+from db import get_games_route, add_game_route, add_bulkGame, get_game, delete_game, update_game
+from flask_mysqldb import MySQL
 
 app = Flask(__name__)
 
-# Sample of Video Games
-videogames = [
-    {'title': "Halo 3", 
-     'developer': "Bungie",
-     'platform': "Xbox 360",
-     'genre': "First-Person Shooter",
-     'release_date': "09/25/2007"
-     },
+# MySQL configuration
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = 'erwinmedina'
+app.config['MYSQL_DB'] = 'video_games'
 
-     {'title': "The Witcher 3 - Wild Hunt", 
-     'developer': "CD Projekt Red",
-     'platform': "Multiple",
-     'genre': "Role-Playing",
-     'release_date': "05/19/2015"
-     },
-]
+# Initialize MySQL
+mysql = MySQL(app)
 
-# Our route home
-@app.route('/')
+@app.route('/', methods=["GET"])
 def home():
-    return render_template('home.html', videogames=videogames)
-
-# Our route for adding a video game
-@app.route('/add_game', methods=['GET', 'POST'])
-def add_game():
-    if request.method == 'POST':
-        title = request.form['title']
-        developer = request.form['developer']
-        platform = request.form['platform']
-        genre = request.form['genre']
-        release_date = request.form['release_date']
-
-        # Create a new game dictionary
-        new_game = {'title': title, 
-                    'developer': developer, 
-                    'platform': platform,
-                    'genre': genre,
-                    'release_date': release_date
-                    }
-        
-        # Add the new video game to the list of video games.
-        videogames.append(new_game)
-
-        # Redirect to the home page after adding the game
-        return redirect(url_for('home'))
-    return render_template('add_game.html')
-
+    games = get_games_route()
+    return render_template('home.html', games=games)
 
 if __name__ == '__main__':
     app.run(debug=True)

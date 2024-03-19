@@ -33,7 +33,7 @@ with app.app_context():
 # ************************************* #
 @app.route('/api/games', methods=['GET'])
 
-def get_games():
+def get_games_route():
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM games")
     games = cur.fetchall()
@@ -50,13 +50,37 @@ def get_games():
         }
         games_list.append(game_dict)
     cur.close()
-    return jsonify(games_list)
+    return games_list
+
+# ********************************* #
+# Returns a single game by ID value # 
+# ********************************* #
+@app.route('/api/games/<int:game_id>', methods=['GET'])
+def get_game(game_id):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM games WHERE id = %s", (game_id,))
+    game = cur.fetchone()
+
+    # Returns error if game doesnt exist in database #
+    if game == None:
+        return jsonify({'Error': 'Game ID is invalid! Try harder.'}), 404
+
+    game_dict = {
+        'id': game[0],
+        'title': game[1],
+        'developer': game[2],
+        'platform': game[3],
+        'genre': game[4],
+        'release_date': game[5]
+    }
+    cur.close()
+    return game_dict
 
 # ********************************** #
 # Posts a game to the MySQL Database #
 # ********************************** #
 @app.route('/api/games', methods=['POST'])
-def add_game():
+def add_game_route():
 
     data = request.json
     title = data.get('title')
@@ -77,19 +101,31 @@ def add_game():
     else:
         return jsonify({'Error': 'Missing required fields'}), 400
  
-# ********************************* #
-# Returns a single game by ID value # 
-# ********************************* #
-@app.route('/api/games/<int:game_id>', methods=['GET'])
-def get_game(game_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM games WHERE id = %s", (game_id,))
-    game = cur.fetchone()
-    cur.close()
-    if game:
-        return jsonify(game)
-    else:
-        return jsonify({'Error': 'Game not found'}), 404
+# ******************************************** #
+# Posts multiple games into the MySQL database #
+# ******************************************** #
+@app.route('/api/games/bulk', methods=['POST'])
+def add_bulkGame():
+    try:
+        games_data = request.json
+        cur = mysql.connection.cursor()
+
+        for game_data in games_data:
+            title = game_data.get('title')
+            developer = game_data.get('developer')
+            platform = game_data.get('platform')
+            genre = game_data.get('genre')
+            release_date = game_data.get('release_date')
+            
+            cur.execute("INSERT INTO games(title, developer, platform, genre, release_date) VALUES (%s, %s, %s, %s, %s)", (title, developer, platform, genre, release_date))
+        
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({'Message': 'Bulk insert successful'}), 201
+    
+    except Exception as e:
+        print(e)
+        return jsonify({"Error": "Failed to bulk insert games"}), 500
 
 
 # ********************************* #
@@ -110,7 +146,7 @@ def delete_game(game_id):
         # Executes the deletion of a game and returns success #
         cur.execute("DELETE FROM games WHERE id = %s", (game_id,))
         mysql.connection.commit()
-        return jsonify({'Message': 'Video game deleted successfully'}), 204
+        return jsonify({}), 204
     
     # Server error if request failed #
     except Exception as e:
